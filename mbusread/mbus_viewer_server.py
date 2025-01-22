@@ -9,7 +9,8 @@ import os
 from ngwidgets.input_webserver import InputWebserver, InputWebSolution, WebserverConfig
 from nicegui import Client
 
-from mbusread.mbus_viewer import MBusExamples, MBusViewer
+from mbusread.mbus_config import MBusExamples
+from mbusread.mbus_viewer import  MBusViewer
 from mbusread.version import Version
 
 

@@ -10,7 +10,7 @@ from argparse import ArgumentParser
 from ngwidgets.cmd import WebserverCmd
 from ngwidgets.mbus_viewer_server import NiceMBusWebserver
 
-from mbusread.mbus_viewer import MBusExamples
+from mbusread.mbus_config import MBusExamples
 
 
 class NiceMBusCmd(WebserverCmd):
