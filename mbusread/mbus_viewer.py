@@ -38,6 +38,7 @@ class MBusViewer(MBusParser):
         try:
             with self.result_row:
                 self.json_code = ""
+                self.json_code_view.content=self.json_code
                 self.error_view.content = ""
                 mbus_hex_str = self.hex_input.value
                 error_msg, frame = self.parse_mbus_frame(mbus_hex_str)
@@ -46,6 +47,7 @@ class MBusViewer(MBusParser):
                 else:
                     json_str = self.get_frame_json(frame)
                     self.json_code = json_str
+                    self.json_code_view.content=self.json_code
         except Exception as ex:
             self.solution.handle_exception(ex)
 
