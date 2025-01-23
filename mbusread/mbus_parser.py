@@ -8,7 +8,8 @@ import re
 import traceback
 
 import meterbus
-import simplejson as json
+import json
+from meterbus.telegram_short import TelegramShort
 
 from mbusread.mbus_config import MBusExamples
 
@@ -28,20 +29,29 @@ class MBusParser:
         return int(x, base)
 
     def get_frame_json(self, frame):
-        """Fallback JSON generation if to_JSON not available"""
-        if hasattr(frame, "to_JSON"):
-            return frame.to_JSON()
-        # Fallback to basic frame info
-        data = {
-            "header": {
-                "start": frame.header.startField.parts[0],
-                "length": len(frame.body.bodyHeader.ci_field.parts) + 2,
-                "control": frame.header.cField.parts[0],
-                "address": frame.header.aField.parts[0],
-            },
-            "body": {"ci_field": frame.body.bodyHeader.ci_field.parts[0]},
-        }
-        return json.dumps(data)
+        """
+        Workarounds for JSON bugs in pyMeterBus
+        """
+        if isinstance(frame, TelegramShort):
+            # Handle serialization explicitly for TelegramShort
+            interpreted_data = frame.interpreted
+            json_str=json.dumps(interpreted_data, sort_keys=True, indent=2,default=str)
+            pass
+        elif hasattr(frame, "to_JSON"):
+            json_str=frame.to_JSON()
+        else:
+            # Fallback to basic frame info
+            data = {
+                "header": {
+                    "start": frame.header.startField.parts[0],
+                    "length": len(frame.body.bodyHeader.ci_field.parts) + 2,
+                    "control": frame.header.cField.parts[0],
+                    "address": frame.header.aField.parts[0],
+                },
+                "body": {"ci_field": frame.body.bodyHeader.ci_field.parts[0]},
+            }
+            json_str= json.dumps(data)
+        return json_str
 
     def parse_mbus_frame(self, hex_data):
         """
