@@ -18,9 +18,10 @@ class MBusViewer(MBusParser):
         super().__init__()
         self.solution = solution
         self.hex_input = None
-        self.json_code = None
+        self.json_code_view = None
         self.example_select = None
         self.error_html = None
+        self.json_code=""
 
     def createTextArea(self, label, placeholder=None, classes: str = "h-64"):
         """Create a standardized textarea with common styling"""
@@ -36,7 +37,7 @@ class MBusViewer(MBusParser):
         """Handle parse button click"""
         try:
             with self.result_row:
-                self.json_code.content = ""
+                self.json_code = ""
                 self.error_view.content = ""
                 mbus_hex_str = self.hex_input.value
                 error_msg, frame = self.parse_mbus_frame(mbus_hex_str)
@@ -44,7 +45,7 @@ class MBusViewer(MBusParser):
                     self.error_view.content = f"{error_msg}"
                 else:
                     json_str = self.get_frame_json(frame)
-                    self.json_code.content = json_str
+                    self.json_code = json_str
         except Exception as ex:
             self.solution.handle_exception(ex)
 
@@ -81,6 +82,7 @@ class MBusViewer(MBusParser):
                 ui.button("Parse Message", on_click=self.on_parse).classes("q-mt-md")
             with ui.row() as self.result_row:
                 self.error_view = ui.html()
-                self.json_code = ui.code(content="",language="json").classes("w-full h-96 q-mt-md")
+                self.json_code_view = ui.code(content=self.json_code,language="json").classes("w-full h-96 q-mt-md")
+                #self.json_code = ui.html(content="").classes("w-full h-96 q-mt-md")
         except Exception as ex:
             self.solution.handle_exception(ex)
