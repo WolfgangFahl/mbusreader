@@ -13,6 +13,9 @@ Meterbus reader
 [Wiki](https://wiki.bitplan.com/index.php/MBus_Reader)
 
 # Introduction
+## Demo
+* [mbus viewer](https://mbus.bitplan.com)
+
 ## MBus Viewer
 See also [Live M-Bus datagram decoder](https://dev-lab.github.io/tmbus/tmbus.htm)
 
@@ -22,8 +25,9 @@ compatible devices. It leverages the `pyMeterBus` library
 to convert these datagrams into JSON and displays
 the parsed results for analysis and debugging.
 
+## MBus Reader
+The MBus Reader is for reading M-Bus devices and optionally integration into
+your favorite home automation by forwarding the JSON results e.g. via [https://en.wikipedia.org/wiki/MQTT MQTT].
 
-## Demo
-* [mbus viewer](https://mbus.bitplan.com)
 ## Screenshot
 ![Screenshot](https://github.com/user-attachments/assets/ca0a41ae-6513-496c-b3ce-b3a892f66d3f)
