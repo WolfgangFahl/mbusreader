@@ -60,24 +60,27 @@ class MBusViewer(MBusParser):
 
     def setup_ui(self):
         """Create the NiceGUI user interface"""
-        ui.label("M-Bus Message Parser").classes("text-h4 q-mb-md")
+        try:
+            ui.label("M-Bus Message Parser").classes("text-h4 q-mb-md")
 
-        self.example_select = ui.select(
-            label="Select Example",
-            options=list(self.examples.keys()),
-            on_change=self.on_example_change,
-        ).classes("w-full q-mb-md")
+            self.example_select = ui.select(
+                label="Select Example",
+                options=list(self.examples.keys()),
+                on_change=self.on_example_change,
+            ).classes("w-full q-mb-md")
 
-        self.example_details = ui.html().classes("w-full mb-4")
+            self.example_details = ui.html().classes("w-full mb-4")
 
-        self.hex_input = self.createTextArea(
-            label="Enter M-Bus hex message",
-            placeholder="e.g. 68 4d 4d 68 08 00 72 26 54 83 22 77...",
-            classes="h-32",
-        )
+            self.hex_input = self.createTextArea(
+                label="Enter M-Bus hex message",
+                placeholder="e.g. 68 4d 4d 68 08 00 72 26 54 83 22 77...",
+                classes="h-32",
+            )
 
-        with ui.row() as self.button_row:
-            ui.button("Parse Message", on_click=self.on_parse).classes("q-mt-md")
-        with ui.row() as self.result_row:
-            self.error_view = ui.html()
-            self.json_code = ui.code(language="json").classes("w-full h-96 q-mt-md")
+            with ui.row() as self.button_row:
+                ui.button("Parse Message", on_click=self.on_parse).classes("q-mt-md")
+            with ui.row() as self.result_row:
+                self.error_view = ui.html()
+                self.json_code = ui.code(content="",language="json").classes("w-full h-96 q-mt-md")
+        except Exception as ex:
+            self.solution.handle_exception(ex)
