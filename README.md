@@ -21,7 +21,7 @@ See also [Live M-Bus datagram decoder](https://dev-lab.github.io/tmbus/tmbus.htm
 
 The MBus-Viewer is a Python-based tool for decoding
 M-Bus datagrams/telegrams from consumption meters and other
-compatible devices. It leverages the `pyMeterBus` library
+compatible devices. It leverages the [pyMeterBus](https://github.com/ganehag/pyMeterBus) library
 to convert these datagrams into JSON and displays
 the parsed results for analysis and debugging.
 
