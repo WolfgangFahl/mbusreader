@@ -27,7 +27,7 @@ the parsed results for analysis and debugging.
 
 ## MBus Reader
 The MBus Reader is for reading M-Bus devices and optionally integration into
-your favorite home automation by forwarding the JSON results e.g. via [MQTT](https://en.wikipedia.org/wiki/MQTT MQTT).
+your favorite home automation by forwarding the JSON results e.g. via [MQTT](https://en.wikipedia.org/wiki/MQTT).
 
 ## Screenshot
 ![Screenshot](https://github.com/user-attachments/assets/ca0a41ae-6513-496c-b3ce-b3a892f66d3f)
