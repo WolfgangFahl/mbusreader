@@ -27,7 +27,7 @@ class NiceMBusWebserver(InputWebserver):
             timeout=6.0,
             copy_right=copy_right,
             version=Version(),
-            default_port=9852,
+            default_port=9996,
         )
         server_config = WebserverConfig.get(config)
         server_config.solution_class = NiceMBus
