@@ -33,6 +33,12 @@ def main():
     parser.add_argument(
         "-m", "--message", help="Message ID to send [default: %(default)s]"
     )
+    parser.add_argument(
+        "-M",
+        "--manufacturer",
+        default="allmess",
+        help="Manufacturer ID [default: %(default)s]",
+    )
     parser.add_argument("--mqtt", action="store_true", help="Enable MQTT publishing")
     parser.add_argument(
         "--lang",
@@ -48,10 +54,9 @@ def main():
     i18n.language = args.lang
     mbus_config = MBusConfig.get(args.config)
     io_config = MBusIoConfig.load_from_yaml_file(args.io_config)
+    device = mbus_config.manufacturers[args.manufacturer].devices[args.device]
 
-    reader = MBusReader(
-        mbus_config=mbus_config, io_config=io_config, i18n=i18n, debug=args.debug
-    )
+    reader = MBusReader(device=device, io_config=io_config, i18n=i18n, debug=args.debug)
     try:
         if args.message:
             reader.send_mbus_request(args.message)

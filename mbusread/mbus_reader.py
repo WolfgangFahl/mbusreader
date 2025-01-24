@@ -22,7 +22,7 @@ class MBusReader:
 
     def __init__(
         self,
-        config: Optional[MBusConfig] = None,
+        device: Device,
         io_config: Optional[MBusIoConfig] = None,
         i18n: I18n = None,
         debug: bool = False,
@@ -31,7 +31,7 @@ class MBusReader:
         Initialize MBusReader with configuration
         """
         self.debug = debug
-        self.config = config or MBusConfig()
+        self.device = device
         self.io_config = io_config or MBusIoConfig
         if i18n is None:
             i18n = I18n.default()
@@ -87,17 +87,19 @@ class MBusReader:
                 # Truncate to first 16 bytes for readability
                 sent_hex = msg[:16].hex()
                 echo_hex = echo[:16].hex()
-                self.logger.warning(f"Echo mismatch! First 16 bytes: Sent=0x{sent_hex}..., Received=0x{echo_hex}...")
+                self.logger.warning(
+                    f"Echo mismatch! First 16 bytes: Sent=0x{sent_hex}..., Received=0x{echo_hex}..."
+                )
         else:
             self.logger.debug(f"Echo matched: {len(echo)} bytes")
 
-    def wake_up(self, device:Device) -> None:
+    def wake_up(self, device: Device) -> None:
         """Perform the wakeup sequence based on device configuration"""
         try:
             pattern = bytes.fromhex(device.wakeup_pattern)
-            times = device.wakeup_times  
+            times = device.wakeup_times
             sleep_time = device.wakeup_delay
-            
+
             self.ser_write(pattern * times, "wake_up_started")
             time.sleep(sleep_time)
             self.ser.parity = serial.PARITY_EVEN
@@ -105,40 +107,36 @@ class MBusReader:
         except serial.SerialException as e:
             self.logger.error(self.i18n.get("serial_error", "wake_up", str(e)))
 
-    def get_data(self, device: Device, read_data_msg_key: str = "read_data") -> Optional[bytes]:
+    def get_data(self, read_data_msg_key: str = "read_data") -> Optional[bytes]:
         """Get data from the M-Bus device"""
         try:
-            if read_data_msg_key not in device.messages:
+            if read_data_msg_key not in self.device.messages:
                 raise ValueError(f"Message {read_data_msg_key} not found")
-                
-            self.wake_up(device)
-            read_data = bytes.fromhex(device.messages[read_data_msg_key].hex)
+
+            self.wake_up(self.device)
+            read_data = bytes.fromhex(self.device.messages[read_data_msg_key].hex)
             self.ser_write(read_data, "reading_data")
-            
+
             result = self.ser.read(620)
             if not result:
                 self.logger.warning(self.i18n.get("no_data_received"))
                 return None
-        
+
             byte_array_hex = binascii.hexlify(result)
             self.logger.info(self.i18n.get("read_data_hex", byte_array_hex.decode()))
             return result
-        
+
         except serial.SerialException as e:
             self.logger.error(self.i18n.get("serial_error", "get_data", str(e)))
             return None
 
-    def send_mbus_request(self, msg_id: str = None) -> None:
+    def send_mbus_request(self, msg_id: str) -> None:
         """Send an M-Bus request to the device"""
         try:
-            # Get device based on command line arg
-            device = self.config.manufacturers[self.device_id].devices[self.device]
-            # Get message from device if msg_id provided
-            request = (
-                bytes.fromhex(device.messages[msg_id].hex)
-                if msg_id
-                else b"\x68\x03\x03\x68\x53\xFE\xA6\xF7\x16"
-            )
+            if msg_id not in self.device.messages:
+                raise ValueError(f"Message {msg_id} not found in device configuration")
+
+            request = bytes.fromhex(self.device.messages[msg_id].hex)
             self.logger.info(self.i18n.get("sending_request"))
             self.ser.write(request)
         except serial.SerialException as e:
