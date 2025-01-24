@@ -105,33 +105,25 @@ class MBusReader:
         except serial.SerialException as e:
             self.logger.error(self.i18n.get("serial_error", "wake_up", str(e)))
 
-    def get_data(self, test_data: Optional[bytes] = None) -> Optional[bytes]:
-        """
-        Get data from the M-Bus device or use test data
-        """
-        if test_data:
-            self.logger.info(self.i18n.get("using_test_data"))
-            return test_data
-
+    def get_data(self, device: Device, read_data_msg_key: str = "read_data") -> Optional[bytes]:
+        """Get data from the M-Bus device"""
         try:
-            # Wake up sequence
-            self.wake_up()
-
-            # Send read request
-            read_data = b"\x10\x5B\xFE\x59\x16"
+            if read_data_msg_key not in device.messages:
+                raise ValueError(f"Message {read_data_msg_key} not found")
+                
+            self.wake_up(device)
+            read_data = bytes.fromhex(device.messages[read_data_msg_key].hex)
             self.ser_write(read_data, "reading_data")
-
-            # Read response
+            
             result = self.ser.read(620)
             if not result:
                 self.logger.warning(self.i18n.get("no_data_received"))
                 return None
-
-            # Log hex data
+        
             byte_array_hex = binascii.hexlify(result)
             self.logger.info(self.i18n.get("read_data_hex", byte_array_hex.decode()))
             return result
-
+        
         except serial.SerialException as e:
             self.logger.error(self.i18n.get("serial_error", "get_data", str(e)))
             return None

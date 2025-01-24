@@ -69,13 +69,6 @@ class TestMBusReader(Basetest):
         reader.wake_up(device)
         self.mock_ser.write.assert_called_with(expected_pattern)
 
-    def test_get_data_with_test_data(self):
-        """Test get_data with test data"""
-        reader = MBusReader(self.config, self.io_config, self.i18n)
-        test_data = bytes.fromhex("68 4d 4d 68 08 00 72")
-
-        result = reader.get_data(test_data)
-        self.assertEqual(result, test_data)
 
     def test_get_data_no_response(self):
         """Test get_data when no response is received"""
