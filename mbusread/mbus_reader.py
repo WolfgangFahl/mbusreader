@@ -14,20 +14,23 @@ from typing import Optional
 import serial
 
 from mbusread.i18n import I18n
-from mbusread.mbus_config import MBusConfig, Device, MBusIoConfig
+from mbusread.mbus_config import Device, MBusConfig, MBusIoConfig
 
 
 class MBusReader:
     """Reader for Meter Bus data"""
 
-    def __init__(self,
+    def __init__(
+        self,
         config: Optional[MBusConfig] = None,
-        io_config:Optional[MBusIoConfig],
+        io_config: Optional[MBusIoConfig] = None,
         i18n: I18n = None,
-        debug:bool=False):
+        debug: bool = False,
+    ):
         """
         Initialize MBusReader with configuration
         """
+        self.debug = debug
         self.config = config or MBusConfig()
         self.io_config = io_config or MBusIoConfig
         if i18n is None:
@@ -39,7 +42,7 @@ class MBusReader:
     def _setup_logger(self) -> logging.Logger:
         """Configure logging"""
         logger = logging.getLogger("MBusReader")
-        if self.config.debug:
+        if self.debug:
             logger.setLevel(logging.DEBUG)
         handler = logging.StreamHandler()
         formatter = logging.Formatter(
@@ -51,7 +54,7 @@ class MBusReader:
 
     def _setup_serial(self) -> serial.Serial:
         """Initialize serial connection"""
-        ser=serial.Serial(
+        ser = serial.Serial(
             port=self.io_config.serial_device,
             baudrate=self.io_config.initial_baudrate,
             bytesize=8,
@@ -80,19 +83,21 @@ class MBusReader:
         # Check and validate echo
         echo = self.ser.read(len(msg))
         if echo != msg:
-            self.logger.warning(f"Echo mismatch! Sent: {msg}, Received: {echo}")
+            if echo != msg:
+                # Truncate to first 16 bytes for readability
+                sent_hex = msg[:16].hex()
+                echo_hex = echo[:16].hex()
+                self.logger.warning(f"Echo mismatch! First 16 bytes: Sent=0x{sent_hex}..., Received=0x{echo_hex}...")
         else:
-            self.logger.debug(f"Echo matched: {echo}")
+            self.logger.debug(f"Echo matched: {len(echo)} bytes")
 
-    def wake_up(self,device:Device) -> None:
+    def wake_up(self, device:Device) -> None:
         """Perform the wakeup sequence based on device configuration"""
         try:
-            # Get wakeup settings with defaults
-            wakeup_config = device.get('wakeup', {})
-            pattern = bytes.fromhex(wakeup_config.get('pattern', '55'))
-            times = wakeup_config.get('times', 528)  # default to 528 if not specified
-            sleep_time = wakeup_config.get('sleep_time', 0.350)
-
+            pattern = bytes.fromhex(device.wakeup_pattern)
+            times = device.wakeup_times  
+            sleep_time = device.wakeup_delay
+            
             self.ser_write(pattern * times, "wake_up_started")
             time.sleep(sleep_time)
             self.ser.parity = serial.PARITY_EVEN

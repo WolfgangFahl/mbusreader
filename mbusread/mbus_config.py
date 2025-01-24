@@ -48,6 +48,7 @@ class MBusMessage:
         example_text = f"{self.name}: {self.title}" if self.title else self.name
         return f"{device_html} → {example_text}"
 
+
 @lod_storable
 class Device:
     """
@@ -73,7 +74,9 @@ class Device:
 
     def wakeup_time(self, baudrate: int = 2400) -> float:
         """Calculate total wakeup time based on pattern repetitions"""
-        secs=(self.wakeup_times * len(bytes.fromhex(self.wakeup_pattern))) / (baudrate / 10) + self.wakeup_delay
+        secs = (self.wakeup_times * len(bytes.fromhex(self.wakeup_pattern))) / (
+            baudrate / 10
+        ) + self.wakeup_delay
         return secs
 
     def as_html(self) -> str:
@@ -92,10 +95,12 @@ class Device:
         mfr_html = (
             self.manufacturer.as_html() if hasattr(self, "manufacturer") else self.mid
         )
-        wakeup_html=f"""wakeup: {self.wakeup_pattern} = {self.wakeup_times}×0x{self.wakeup_pattern} ({self.wakeup_time(2400):.2f}s incl. {self.wakeup_delay}s delay)"""
+        wakeup_html = f"""wakeup: {self.wakeup_pattern} = {self.wakeup_times}×0x{self.wakeup_pattern} ({self.wakeup_time(2400):.2f}s incl. {self.wakeup_delay}s delay)"""
         markup = f"""{mfr_html} → {device_link}{doc_link}<br>
 {wakeup_html}"""
         return markup
+
+
 @lod_storable
 class Manufacturer:
     """

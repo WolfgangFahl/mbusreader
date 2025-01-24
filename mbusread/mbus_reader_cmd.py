@@ -25,9 +25,14 @@ def main():
         help="IO config file path [default: %(default)s]",
     )
     parser.add_argument(
-        "-D", "--device", default="cf_echo_ii", help="Device type [default: %(default)s]"
+        "-D",
+        "--device",
+        default="cf_echo_ii",
+        help="Device type [default: %(default)s]",
     )
-    parser.add_argument("-m", "--message", help="Message ID to send [default: %(default)s]")
+    parser.add_argument(
+        "-m", "--message", help="Message ID to send [default: %(default)s]"
+    )
     parser.add_argument("--mqtt", action="store_true", help="Enable MQTT publishing")
     parser.add_argument(
         "--lang",
@@ -40,15 +45,12 @@ def main():
     args = parser.parse_args()
 
     i18n = I18n.default()
-    i18n.language=args.lang
+    i18n.language = args.lang
     mbus_config = MBusConfig.get(args.config)
     io_config = MBusIoConfig.load_from_yaml_file(args.io_config)
 
     reader = MBusReader(
-        mbus_config=mbus_config,
-        io_config=io_config,
-        i18n=i18n,
-        debug=args.debug
+        mbus_config=mbus_config, io_config=io_config, i18n=i18n, debug=args.debug
     )
     try:
         if args.message:
