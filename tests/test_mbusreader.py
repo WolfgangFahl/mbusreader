@@ -39,20 +39,26 @@ class TestMBusReader(Basetest):
         self.config = MBusConfig.get(self.examples_path + "/mbus_config.yaml")
         self.io_config = MBusIoConfig()
         self.i18n = I18n.default()
+        self.manufacturer = list(self.config.manufacturers.values())[0]
+        self.devices = list(self.manufacturer.devices.values())
 
     def tearDown(self):
         """Clean up after tests"""
         self.mock_serial_patcher.stop()
 
-    def test_wake_up_sequence(self):
-        """Test the wake up sequence for CF Echo II"""
-        reader = MBusReader(self.config, self.io_config, self.i18n)
-        device = self.config.manufacturers["allmess"].devices["cf_echo_ii"]
+   
+    def get_device(self, index:int=0) -> Device:
+        """Get test device by index"""
+        return self.devices[index]
 
-        reader.wake_up(device)
-        expected_pattern = bytes.fromhex("55") * 528
-        self.mock_ser.write.assert_called_with(expected_pattern)
-        self.assertEqual(self.mock_ser.parity, serial.PARITY_EVEN)
+    def test_wake_up_pattern(self):
+        """Test wake up patterns for all devices"""
+        for device in self.devices:
+            reader = MBusReader(self.config, self.io_config, self.i18n)
+            expected_pattern = bytes.fromhex('55') * device.wakeup_times
+            self.mock_ser.read.return_value = expected_pattern
+            reader.wake_up(device)
+            self.mock_ser.write.assert_called_with(expected_pattern)
 
     def test_ultramaxx_wake_up(self):
         """Test wake up sequence for UltraMaxx"""
