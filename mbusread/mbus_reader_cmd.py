@@ -16,18 +16,18 @@ def main():
         "-c",
         "--config",
         default=MBusConfig.examples_path() + "/mbus_config.yaml",
-        help="Config file path (default: examples/mbus_config.yaml)",
+        help="Config file path [default: %(default)s]",
     )
     parser.add_argument(
         "-i",
         "--io_config",
-        default="/tmp/mbus_io.yaml",
-        help="IO config file path (default: /tmp/mbus_io.yaml)",
+        default=MBusConfig.examples_path() + "/mbus_io.yaml",
+        help="IO config file path [default: %(default)s]",
     )
     parser.add_argument(
-        "-D", "--device", default="cf_echo_ii", help="Device type (default: cf_echo_ii)"
+        "-D", "--device", default="cf_echo_ii", help="Device type [default: %(default)s]"
     )
-    parser.add_argument("-m", "--message", help="Message ID to send")
+    parser.add_argument("-m", "--message", help="Message ID to send [default: %(default)s]")
     parser.add_argument("--mqtt", action="store_true", help="Enable MQTT publishing")
     parser.add_argument(
         "--lang",
