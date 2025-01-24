@@ -1,8 +1,6 @@
 """
 Created on 2025-01-22
-
-
-
+M-Bus configuration Classes to be read from configuration files e.g. YAML encoded
 @author: wf
 """
 
@@ -50,23 +48,36 @@ class MBusMessage:
         example_text = f"{self.name}: {self.title}" if self.title else self.name
         return f"{device_html} → {example_text}"
 
-
 @lod_storable
 class Device:
     """
     A device class for M-Bus devices storing manufacturer reference
+
+    Note on wakeup timing:
+    The M-Bus standard formula suggests 33 bytes per 300 baud with
+    start+8data+stop = 10 bits. However, we use configured pattern repetitions:
+    - Default is 528 times (0x55)
+    - Ultramaxx needs 1056 times (66 lines * 16 bytes)
+    The total time includes sending these patterns at the given baudrate
+    plus a fixed delay time.
     """
 
     model: str
-    title: str = ""  # Optional full product title
-    url: str = ""  # optional device url
-    doc_url: str = ""  # Documentation URL
-    wakeup_pattern: str = None
-    wakeup_time: float = 2.2  # secs
+    title: str = ""
+    url: str = ""
+    doc_url: str = ""
+    wakeup_pattern: str = "55"
+    wakeup_times: int = 528  # Number of pattern repetitions
     wakeup_delay: float = 0.35  # secs
     messages: Dict[str, MBusMessage] = field(default_factory=dict)
 
+    def wakeup_time(self, baudrate: int = 2400) -> float:
+        """Calculate total wakeup time based on pattern repetitions"""
+        secs=(self.wakeup_times * len(bytes.fromhex(self.wakeup_pattern))) / (baudrate / 10) + self.wakeup_delay
+        return secs
+
     def as_html(self) -> str:
+        """Generate HTML representation of the device including wakeup info"""
         title = self.title if self.title else self.model
         device_link = (
             Link.create(url=self.url, text=title, target="_blank")
@@ -81,9 +92,10 @@ class Device:
         mfr_html = (
             self.manufacturer.as_html() if hasattr(self, "manufacturer") else self.mid
         )
-        return f"{mfr_html} → {device_link}{doc_link}"
-
-
+        wakeup_html=f"""wakeup: {self.wakeup_pattern} = {self.wakeup_times}×0x{self.wakeup_pattern} ({self.wakeup_time(2400):.2f}s incl. {self.wakeup_delay}s delay)"""
+        markup = f"""{mfr_html} → {device_link}{doc_link}<br>
+{wakeup_html}"""
+        return markup
 @lod_storable
 class Manufacturer:
     """

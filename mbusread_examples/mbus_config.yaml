@@ -12,6 +12,10 @@ manufacturers:
         model: CF Echo II
         title: ''
         doc_url: https://www.allmess.de/fileadmin/multimedia/alle_Dateien/MA/MA_BA_12088-AC%20CF%20Echo%20II%20D%20TS1021_KL.pdf
+        wakeup:
+          pattern: "55"
+          times: 528
+          sleep_time: 0.350
         messages:
           read1:
             name: Basic Reading
@@ -30,6 +34,10 @@ manufacturers:
         model: CF UltraMaxx V
         url: https://de.itron.com/de/products/cf-ultramaxx-v
         doc_url: https://www.gavilar.nl/files/cf-ultramaxx-v-03-13.pdf
+        wakeup:
+          pattern: "55"
+          times: 1056  # Based on the sequence you showed (66 lines * 16 bytes)
+          sleep_time: 0.350
         messages:
           msg1:
             name: message1

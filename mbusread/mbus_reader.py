@@ -14,7 +14,7 @@ from typing import Optional
 import serial
 
 from mbusread.i18n import I18n
-from mbusread.mbus_config import MBusConfig
+from mbusread.mbus_config import MBusConfig, Device
 
 
 class MBusReader:
@@ -78,11 +78,15 @@ class MBusReader:
         else:
             self.logger.debug(f"Echo matched: {echo}")
 
-    def wake_up(
-        self, pattern: bytes = b"\x55", times: int = 528, sleep_time: float = 0.350
-    ) -> None:
-        """Perform the wakeup sequence"""
+    def wake_up(self,device:Device) -> None:
+        """Perform the wakeup sequence based on device configuration"""
         try:
+            # Get wakeup settings with defaults
+            wakeup_config = device.get('wakeup', {})
+            pattern = bytes.fromhex(wakeup_config.get('pattern', '55'))
+            times = wakeup_config.get('times', 528)  # default to 528 if not specified
+            sleep_time = wakeup_config.get('sleep_time', 0.350)
+
             self.ser_write(pattern * times, "wake_up_started")
             time.sleep(sleep_time)
             self.ser.parity = serial.PARITY_EVEN

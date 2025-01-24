@@ -1,14 +1,18 @@
 from dataclasses import dataclass, field
-from typing import Callable, Dict, Optional, TypeVar, Generic
-from nicegui import ui, observables
-from mbusread.mbus_config import MBusConfig, Manufacturer, Device, MBusMessage
+from typing import Callable, Dict, Generic, Optional, TypeVar
+
+from nicegui import observables, ui
+
+from mbusread.mbus_config import Device, Manufacturer, MBusConfig, MBusMessage
 from mbusread.mbus_parser import MBusParser
 
-T = TypeVar('T')
+T = TypeVar("T")
+
 
 @dataclass
 class RadioSelection(Generic[T]):
     """Generic radio button selection with type hints and improved structure"""
+
     title: str
     key_attr: str
     selection: Dict[str, T] = field(default_factory=dict)
@@ -21,17 +25,20 @@ class RadioSelection(Generic[T]):
         self.label = None
         self.options = observables.ObservableDict()
 
-    def setup(self, on_change: Optional[Callable[[T], None]] = None) -> 'RadioSelection[T]':
+    def setup(
+        self, on_change: Optional[Callable[[T], None]] = None
+    ) -> "RadioSelection[T]":
         """Initialize the radio selection UI components"""
         self.on_change = on_change
         with ui.column():
             self.label = ui.label(self.title).classes("font-bold text-lg")
             self.options = observables.ObservableDict()
             self._update_options()
-            self.radio = (ui.radio(options=list(self.options.keys()),
-                                 on_change=self._handle_change,
-                                 value=self.value)
-                         .props('inline dense'))
+            self.radio = ui.radio(
+                options=list(self.options.keys()),
+                on_change=self._handle_change,
+                value=self.value,
+            ).props("inline dense")
         return self
 
     def _update_options(self) -> None:
@@ -65,6 +72,7 @@ class RadioSelection(Generic[T]):
         except KeyError as e:
             ui.notify(f"Invalid selection: {str(e)}", type="negative")
 
+
 class MBusViewer(MBusParser):
     """Enhanced M-Bus message viewer with improved error handling and UI organization"""
 
@@ -79,56 +87,68 @@ class MBusViewer(MBusParser):
         self.details_view: Optional[ui.html] = None
         self.error_view: Optional[ui.html] = None
 
-    def create_textarea(self, label: str, placeholder: Optional[str] = None,
-                       height: str = "h-32") -> ui.textarea:
+    def create_textarea(
+        self, label: str, placeholder: Optional[str] = None, height: str = "h-32"
+    ) -> ui.textarea:
         """Create a consistent textarea with error handling"""
-        return (ui.textarea(label=label, placeholder=placeholder)
-                .classes(f"w-full {height}")
-                .props("clearable outlined"))
+        return (
+            ui.textarea(label=label, placeholder=placeholder)
+            .classes(f"w-full {height}")
+            .props("clearable outlined")
+        )
 
     def setup_ui(self) -> None:
-        """Create the main UI layout with error handling"""
+        """Create the main UI layout with two-column design"""
         try:
-            with ui.column().classes("w-full gap-4"):
-                ui.label("M-Bus Message Parser").classes("text-2xl font-bold mb-4")
+            ui.label("M-Bus Message Parser").classes("text-2xl font-bold mb-4")
 
-                # Selection panels
-                with ui.card().classes("w-full"):
-                    with ui.row().classes("gap-8"):
-                        # Initialize radio selections
-                        self.manufacturer_select = RadioSelection[Manufacturer](
-                            "Manufacturer", "name",
-                            selection=self.config.manufacturers
-                        ).setup(self._on_manufacturer_change)
+            with ui.row().classes("w-full gap-4"):
+                # Left column
+                with ui.column().classes("flex-1"):
+                    with ui.card().classes("w-full"):
+                        with ui.row().classes("gap-8"):
+                            self.manufacturer_select = RadioSelection[Manufacturer](
+                                "Manufacturer",
+                                "name",
+                                selection=self.config.manufacturers,
+                            ).setup(self._on_manufacturer_change)
 
-                        self.device_select = RadioSelection[Device](
-                            "Device", "model",
-                            selection=self.manufacturer_select.item.devices
-                        ).setup(self._on_device_change)
+                            self.device_select = RadioSelection[Device](
+                                "Device",
+                                "model",
+                                selection=self.manufacturer_select.item.devices,
+                            ).setup(self._on_device_change)
 
+                        # Device details
+                        with ui.card().classes("w-full"):
+                            ui.label("Device Details").classes("text-lg font-bold mb-2")
+                            self.details_view = ui.html()
 
-                    with ui.row().classes("mt-4"):
-                        self.message_select = RadioSelection[MBusMessage](
-                            "Message", "name",
-                            selection=self.device_select.item.messages
-                        ).setup(self._on_message_change)
+                        with ui.row().classes("mt-4"):
+                            self.message_select = RadioSelection[MBusMessage](
+                                "Message",
+                                "name",
+                                selection=self.device_select.item.messages,
+                            ).setup(self._on_message_change)
 
-                # Device details
-                self.details_view = ui.html().classes("w-full")
+                    # Input area
+                    with ui.card().classes("w-full mt-4"):
+                        self.hex_input = self.create_textarea(
+                            "Enter M-Bus hex message",
+                            "e.g. 68 4d 4d 68 08 00 72 26 54 83 22 77...",
+                        )
+                        ui.button(
+                            "Parse Message", on_click=self._parse_message
+                        ).classes("mt-4")
 
-                # Input area
-                with ui.card().classes("w-full"):
-                    self.hex_input = self.create_textarea(
-                        "Enter M-Bus hex message",
-                        "e.g. 68 4d 4d 68 08 00 72 26 54 83 22 77...")
-
-                    ui.button("Parse Message",
-                             on_click=self._parse_message).classes("mt-4")
-
-                # Results area
-                with ui.card().classes("w-full"):
-                    self.error_view = ui.html().classes("text-red-500")
-                    self.json_view = ui.code("", language="json").classes("w-full h-96")
+                # Right column
+                with ui.column().classes("flex-1"):
+                    # Results area
+                    with ui.row().classes("w-full"):
+                        self.error_view = ui.html().classes("text-red-500")
+                        self.json_view = ui.code("", language="json").classes(
+                            "w-full h-96"
+                        )
 
         except Exception as ex:
             self._handle_error("Error setting up UI", ex)
@@ -146,6 +166,7 @@ class MBusViewer(MBusParser):
         try:
             self.message_select.selection = device.messages
             self.message_select._update_options()
+            self.details_view.content = device.as_html()
         except Exception as ex:
             self._handle_error("Error updating messages", ex)
 

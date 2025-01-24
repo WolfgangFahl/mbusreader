@@ -39,7 +39,8 @@ def main():
 
     args = parser.parse_args()
 
-    i18n = I18n.from_yaml_path(MBusConfig.examples_path() + "/i18n.yaml", args.lang)
+    i18n = I18n.default()
+    i18n.language=args.lang
     mbus_config = MBusConfig.get(args.config)
     io_config = MBusIoConfig.load_from_yaml_file(args.io_config)
 

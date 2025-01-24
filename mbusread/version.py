@@ -18,7 +18,7 @@ class Version:
     name = "mbusreader"
     version = mbusread.__version__
     date = "2025-01-22"
-    updated = "2025-01-23"
+    updated = "2025-01-24"
     description = "MBus message parser and JSON result viewer"
 
     authors = "Wolfgang Fahl"
