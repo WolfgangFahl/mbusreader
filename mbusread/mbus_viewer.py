@@ -1,90 +1,188 @@
-"""
-Created on 2025-01-22
-
-@author: wf
-"""
-
-from nicegui import ui
-
+from dataclasses import dataclass, field
+from typing import Callable, Dict, Optional, TypeVar, Generic
+from nicegui import ui, observables
+from mbusread.mbus_config import MBusConfig, Manufacturer, Device, MBusMessage
 from mbusread.mbus_parser import MBusParser
 
+T = TypeVar('T')
+
+@dataclass
+class RadioSelection(Generic[T]):
+    """Generic radio button selection with type hints and improved structure"""
+    title: str
+    key_attr: str
+    selection: Dict[str, T] = field(default_factory=dict)
+    value: Optional[str] = None
+    item: Optional[T] = None
+    on_change: Optional[Callable[[T], None]] = None
+
+    def __post_init__(self):
+        self.radio = None
+        self.label = None
+        self.options = observables.ObservableDict()
+
+    def setup(self, on_change: Optional[Callable[[T], None]] = None) -> 'RadioSelection[T]':
+        """Initialize the radio selection UI components"""
+        self.on_change = on_change
+        with ui.column():
+            self.label = ui.label(self.title).classes("font-bold text-lg")
+            self.options = observables.ObservableDict()
+            self._update_options()
+            self.radio = (ui.radio(options=list(self.options.keys()),
+                                 on_change=self._handle_change,
+                                 value=self.value)
+                         .props('inline dense'))
+        return self
+
+    def _update_options(self) -> None:
+        """Update radio options with error handling"""
+        try:
+            self.options.clear()
+            for i, (key, item) in enumerate(self.selection.items()):
+                value = getattr(item, self.key_attr)
+                self.options[value] = key
+                if i == 0:  # Set initial selection
+                    self.value = value
+                    self.item = item
+
+            if self.radio:
+                self.radio.clear()
+                self.radio.options = list(self.options.keys())
+                self.radio.update()
+
+        except AttributeError as e:
+            ui.notify(f"Error updating options: {str(e)}", type="negative")
+
+    def _handle_change(self, event) -> None:
+        """Handle radio selection changes with validation"""
+        try:
+            self.value = event.value
+            key = self.options.get(self.value)
+            if key is not None:
+                self.item = self.selection[key]
+                if self.on_change:
+                    self.on_change(self.item)
+        except KeyError as e:
+            ui.notify(f"Invalid selection: {str(e)}", type="negative")
 
 class MBusViewer(MBusParser):
-    """
-    Meterbus message viewer with JSON editor support
-    """
+    """Enhanced M-Bus message viewer with improved error handling and UI organization"""
 
     def __init__(self, solution=None):
         super().__init__()
         self.solution = solution
-        self.hex_input = None
-        self.json_code_view = None
-        self.example_select = None
-        self.error_html = None
-        self.json_code=""
+        self.config = MBusConfig.get()
 
-    def createTextArea(self, label, placeholder=None, classes: str = "h-64"):
-        """Create a standardized textarea with common styling"""
-        textarea = (
-            ui.textarea(label=label, placeholder=placeholder)
-            .classes("w-full")
-            .props(f"input-class={classes}")
-            .props("clearable")
-        )
-        return textarea
+        # Initialize UI components
+        self.hex_input: Optional[ui.textarea] = None
+        self.json_view: Optional[ui.code] = None
+        self.details_view: Optional[ui.html] = None
+        self.error_view: Optional[ui.html] = None
 
-    def on_parse(self):
-        """Handle parse button click"""
+    def create_textarea(self, label: str, placeholder: Optional[str] = None,
+                       height: str = "h-32") -> ui.textarea:
+        """Create a consistent textarea with error handling"""
+        return (ui.textarea(label=label, placeholder=placeholder)
+                .classes(f"w-full {height}")
+                .props("clearable outlined"))
+
+    def setup_ui(self) -> None:
+        """Create the main UI layout with error handling"""
         try:
-            with self.result_row:
-                self.json_code = ""
-                self.json_code_view.content=self.json_code
-                self.error_view.content = ""
-                mbus_hex_str = self.hex_input.value
-                error_msg, frame = self.parse_mbus_frame(mbus_hex_str)
-                if error_msg:
-                    self.error_view.content = f"{error_msg}"
-                else:
-                    json_str = self.get_frame_json(frame)
-                    self.json_code = json_str
-                    self.json_code_view.content=self.json_code
+            with ui.column().classes("w-full gap-4"):
+                ui.label("M-Bus Message Parser").classes("text-2xl font-bold mb-4")
+
+                # Selection panels
+                with ui.card().classes("w-full"):
+                    with ui.row().classes("gap-8"):
+                        # Initialize radio selections
+                        self.manufacturer_select = RadioSelection[Manufacturer](
+                            "Manufacturer", "name",
+                            selection=self.config.manufacturers
+                        ).setup(self._on_manufacturer_change)
+
+                        self.device_select = RadioSelection[Device](
+                            "Device", "model",
+                            selection=self.manufacturer_select.item.devices
+                        ).setup(self._on_device_change)
+
+
+                    with ui.row().classes("mt-4"):
+                        self.message_select = RadioSelection[MBusMessage](
+                            "Message", "name",
+                            selection=self.device_select.item.messages
+                        ).setup(self._on_message_change)
+
+                # Device details
+                self.details_view = ui.html().classes("w-full")
+
+                # Input area
+                with ui.card().classes("w-full"):
+                    self.hex_input = self.create_textarea(
+                        "Enter M-Bus hex message",
+                        "e.g. 68 4d 4d 68 08 00 72 26 54 83 22 77...")
+
+                    ui.button("Parse Message",
+                             on_click=self._parse_message).classes("mt-4")
+
+                # Results area
+                with ui.card().classes("w-full"):
+                    self.error_view = ui.html().classes("text-red-500")
+                    self.json_view = ui.code("", language="json").classes("w-full h-96")
+
         except Exception as ex:
-            self.solution.handle_exception(ex)
+            self._handle_error("Error setting up UI", ex)
 
-    def on_example_change(self):
-        """Handle example selection change"""
-
-        selected = self.example_select.value
-        if selected in self.examples:
-            example = self.examples[selected]
-            self.hex_input.value = example.hex
-            self.example_details.content = example.as_html()
-            self.on_parse()
-
-    def setup_ui(self):
-        """Create the NiceGUI user interface"""
+    def _on_manufacturer_change(self, manufacturer: Manufacturer) -> None:
+        """Update device options when manufacturer changes"""
         try:
-            ui.label("M-Bus Message Parser").classes("text-h4 q-mb-md")
-
-            self.example_select = ui.select(
-                label="Select Example",
-                options=list(self.examples.keys()),
-                on_change=self.on_example_change,
-            ).classes("w-full q-mb-md")
-
-            self.example_details = ui.html().classes("w-full mb-4")
-
-            self.hex_input = self.createTextArea(
-                label="Enter M-Bus hex message",
-                placeholder="e.g. 68 4d 4d 68 08 00 72 26 54 83 22 77...",
-                classes="h-32",
-            )
-
-            with ui.row() as self.button_row:
-                ui.button("Parse Message", on_click=self.on_parse).classes("q-mt-md")
-            with ui.row() as self.result_row:
-                self.error_view = ui.html()
-                self.json_code_view = ui.code(content=self.json_code,language="json").classes("w-full h-96 q-mt-md")
-                #self.json_code = ui.html(content="").classes("w-full h-96 q-mt-md")
+            self.device_select.selection = manufacturer.devices
+            self.device_select._update_options()
         except Exception as ex:
-            self.solution.handle_exception(ex)
+            self._handle_error("Error updating devices", ex)
+
+    def _on_device_change(self, device: Device) -> None:
+        """Update message options when device changes"""
+        try:
+            self.message_select.selection = device.messages
+            self.message_select._update_options()
+        except Exception as ex:
+            self._handle_error("Error updating messages", ex)
+
+    def _on_message_change(self, message: MBusMessage) -> None:
+        """Update display when message changes"""
+        try:
+            self.hex_input.value = message.hex
+            self.details_view.content = message.device.as_html()
+            self._parse_message()
+        except Exception as ex:
+            self._handle_error("Error updating message display", ex)
+
+    def _parse_message(self) -> None:
+        """Parse the M-Bus message with comprehensive error handling"""
+        try:
+            self.json_view.content = ""
+            self.error_view.content = ""
+
+            hex_str = self.hex_input.value
+            if not hex_str:
+                raise ValueError("Please enter a hex message")
+
+            error_msg, frame = self.parse_mbus_frame(hex_str)
+            if error_msg:
+                raise ValueError(error_msg)
+
+            json_str = self.get_frame_json(frame)
+            self.json_view.content = json_str
+
+        except Exception as ex:
+            self._handle_error("Error parsing message", ex)
+
+    def _handle_error(self, context: str, error: Exception) -> None:
+        """Centralized error handling with user feedback"""
+        error_msg = f"{context}: {str(error)}"
+        self.error_view.content = f"<div class='text-red-500'>{error_msg}</div>"
+        ui.notify(error_msg, type="negative")
+
+        if self.solution:
+            self.solution.handle_exception(error)

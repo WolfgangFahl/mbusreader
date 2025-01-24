@@ -1,44 +1,54 @@
 """
 Created on 2025-01-22
 
+
+
 @author: wf
 """
 
 import os
-from dataclasses import dataclass, field
+from dataclasses import field
 from typing import Dict
 
 from ngwidgets.widgets import Link
 from ngwidgets.yamlable import lod_storable
 
 
-@dataclass
-class MBusConfig:
+@lod_storable
+class MBusIoConfig:
     """Configuration data class for M-Bus reader"""
 
     serial_device: str = "/dev/ttyUSB0"
-    baudrate: int = 2400
+    initial_baudrate: int = 2400
     timeout: float = 10.0
-    debug: bool = False
-    language: str = "en"
 
 
 @lod_storable
-class Manufacturer:
+class MqttConfig:
+    """MQTT configuration"""
+
+    broker: str = "localhost"
+    port: int = 1883
+    username: str = None
+    password: str = None
+    topic: str = "mbus/data"
+
+
+@lod_storable
+class MBusMessage:
     """
-    A manufacturer of M-Bus devices
+    An M-Bus message
     """
 
     name: str
-    url: str
-    country: str = "Germany"  # Most M-Bus manufacturers are German
+    title: str
+    hex: str
+    valid: bool = False
 
     def as_html(self) -> str:
-        return (
-            Link.create(url=self.url, text=self.name, target="_blank")
-            if self.url
-            else self.name
-        )
+        device_html = self.device.as_html() if hasattr(self, "device") else self.did
+        example_text = f"{self.name}: {self.title}" if self.title else self.name
+        return f"{device_html} → {example_text}"
 
 
 @lod_storable
@@ -47,12 +57,14 @@ class Device:
     A device class for M-Bus devices storing manufacturer reference
     """
 
-    mid: str  # manufacturer id reference
     model: str
     title: str = ""  # Optional full product title
     url: str = ""  # optional device url
     doc_url: str = ""  # Documentation URL
-    # manufacturer: Manufacturer - set on relink
+    wakeup_pattern: str = None
+    wakeup_time: float = 2.2  # secs
+    wakeup_delay: float = 0.35  # secs
+    messages: Dict[str, MBusMessage] = field(default_factory=dict)
 
     def as_html(self) -> str:
         title = self.title if self.title else self.model
@@ -73,75 +85,51 @@ class Device:
 
 
 @lod_storable
-class MBusExample:
+class Manufacturer:
     """
-    An M-Bus example storing device reference
+    A manufacturer of M-Bus devices
     """
 
-    did: str  # device id reference
     name: str
-    title: str
-    hex: str
-    valid: bool = False
-    # device: Device - set on relink
+    url: str
+    country: str = "Germany"  # Most M-Bus manufacturers are German
+    devices: Dict[str, Device] = field(default_factory=dict)
 
     def as_html(self) -> str:
-        device_html = self.device.as_html() if hasattr(self, "device") else self.did
-        example_text = f"{self.name}: {self.title}" if self.title else self.name
-        return f"{device_html} → {example_text}"
+        return (
+            Link.create(url=self.url, text=self.name, target="_blank")
+            if self.url
+            else self.name
+        )
 
 
 @lod_storable
-class MBusExamples:
+class MBusConfig:
     """
-    Manages M-Bus devices and their examples with separate dictionaries for
-    manufacturers, devices and examples
+    Manages M-Bus manufacture/devices/message hierarchy
     """
 
     manufacturers: Dict[str, Manufacturer] = field(default_factory=dict)
-    devices: Dict[str, Device] = field(default_factory=dict)
-    examples: Dict[str, MBusExample] = field(default_factory=dict)
 
     @classmethod
-    def get(cls, yaml_path: str = None) -> "MBusExamples":
-        """
-        Load and dereference M-Bus examples from YAML
-
-        Args:
-            yaml_path: Path to YAML file (defaults to examples_path/mbus_examples.yaml)
-
-        Returns:
-            MBusExamples instance with dereferenced objects
-        """
+    def get(cls, yaml_path: str = None) -> "MBusConfig":
         if yaml_path is None:
-            yaml_path = cls.examples_path() + "/mbus_examples.yaml"
+            yaml_path = cls.examples_path() + "/mbus_config.yaml"
 
         # Load raw YAML data
-        mbus_examples = cls.load_from_yaml_file(yaml_path)
-        mbus_examples.relink()
-        return mbus_examples
+        mbus_config = cls.load_from_yaml_file(yaml_path)
+        mbus_config.relink()
+        return mbus_config
 
     def relink(self):
         """
-        Reestablish object references between manufacturers, devices and examples
+        Link objects in the manufacturer/device/message hierarchy
         """
-        # Dereference manufacturers in devices
-        for device_id, device in self.devices.items():
-            if device.mid in self.manufacturers:
-                device.manufacturer = self.manufacturers[device.mid]
-            else:
-                raise KeyError(
-                    f"Manufacturer '{device.mid}' not found for device '{device_id}'"
-                )
-
-        # Dereference devices in examples
-        for example_id, example in self.examples.items():
-            if example.did in self.devices:
-                example.device = self.devices[example.did]
-            else:
-                raise KeyError(
-                    f"Device '{example.did}' not found for example '{example_id}'"
-                )
+        for manufacturer in self.manufacturers.values():
+            for _device_id, device in manufacturer.devices.items():
+                device.manufacturer = manufacturer
+                for _message_id, message in device.messages.items():
+                    message.device = device
 
     @classmethod
     def examples_path(cls) -> str:

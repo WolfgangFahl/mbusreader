@@ -9,8 +9,8 @@ import os
 from ngwidgets.input_webserver import InputWebserver, InputWebSolution, WebserverConfig
 from nicegui import Client
 
-from mbusread.mbus_config import MBusExamples
-from mbusread.mbus_viewer import  MBusViewer
+from mbusread.mbus_config import MBusConfig
+from mbusread.mbus_viewer import MBusViewer
 from mbusread.version import Version
 
 
@@ -42,7 +42,7 @@ class NiceMBusWebserver(InputWebserver):
 
     def configure_run(self):
         root_path = (
-            self.args.root_path if self.args.root_path else MBusExamples.examples_path()
+            self.args.root_path if self.args.root_path else MBusConfig.examples_path()
         )
         self.root_path = os.path.abspath(root_path)
         self.allowed_urls = [

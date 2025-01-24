@@ -8,9 +8,9 @@ import sys
 from argparse import ArgumentParser
 
 from ngwidgets.cmd import WebserverCmd
-from mbusread.mbus_viewer_server import NiceMBusWebserver
 
-from mbusread.mbus_config import MBusExamples
+from mbusread.mbus_config import MBusConfig
+from mbusread.mbus_viewer_server import NiceMBusWebserver
 
 
 class NiceMBusCmd(WebserverCmd):
@@ -26,7 +26,7 @@ class NiceMBusCmd(WebserverCmd):
         parser.add_argument(
             "-rp",
             "--root_path",
-            default=MBusExamples.examples_path(),
+            default=MBusConfig.examples_path(),
             help="path to mbux hex files [default: %(default)s]",
         )
         return parser

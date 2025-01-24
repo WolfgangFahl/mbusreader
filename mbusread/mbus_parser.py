@@ -1,17 +1,14 @@
 """
 Created on 2025-01-22
-
 @author: wf
 """
 
+import json
 import re
 import traceback
 
 import meterbus
-import json
 from meterbus.telegram_short import TelegramShort
-
-from mbusread.mbus_config import MBusExamples
 
 
 class MBusParser:
@@ -20,9 +17,7 @@ class MBusParser:
     """
 
     def __init__(self, debug: bool = False):
-        # Define example messages
         self.debug = debug
-        self.examples = MBusExamples.get().examples
 
     def fromhex(self, x, base=16):
         """Convert hex string to integer"""
@@ -35,10 +30,11 @@ class MBusParser:
         if isinstance(frame, TelegramShort):
             # Handle serialization explicitly for TelegramShort
             interpreted_data = frame.interpreted
-            json_str=json.dumps(interpreted_data, sort_keys=True, indent=2,default=str)
-            pass
+            json_str = json.dumps(
+                interpreted_data, sort_keys=True, indent=2, default=str
+            )
         elif hasattr(frame, "to_JSON"):
-            json_str=frame.to_JSON()
+            json_str = frame.to_JSON()
         else:
             # Fallback to basic frame info
             data = {
@@ -50,7 +46,7 @@ class MBusParser:
                 },
                 "body": {"ci_field": frame.body.bodyHeader.ci_field.parts[0]},
             }
-            json_str= json.dumps(data)
+            json_str = json.dumps(data)
         return json_str
 
     def parse_mbus_frame(self, hex_data):
@@ -61,16 +57,12 @@ class MBusParser:
         frame = None
         error_msg = None
         try:
-            # Allow flexible whitespace in input
             filtered_data = "".join(char for char in hex_data if char.isalnum())
-            # Convert hex string to bytes
             data = list(map(self.fromhex, re.findall("..", filtered_data)))
-            # Parse using meterbus
             frame = meterbus.load(data)
         except Exception as ex:
             error_type = type(ex).__name__
             error_msg = f"Error parsing M-Bus data: {error_type}: {str(ex)}"
             if self.debug:
                 traceback.format_exception(ex)
-                pass
         return error_msg, frame

@@ -1,0 +1,10 @@
+# mbus_config.yaml
+# Configuration file for M-Bus reader
+# https://github.com/WolfgangFahl/mbusreader
+# Created on 2025-01-24
+# @author: wf
+serial_device: /dev/ttyUSB0
+baudrate: 2400
+timeout: 2.0
+debug: false
+language: en
