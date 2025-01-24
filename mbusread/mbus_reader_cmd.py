@@ -21,7 +21,7 @@ def main():
     parser.add_argument(
         "-i",
         "--io_config",
-        default=MBusConfig.examples_path() + "/mbus_io.yaml",
+        default=MBusConfig.examples_path() + "/mbus_io_config.yaml",
         help="IO config file path [default: %(default)s]",
     )
     parser.add_argument(
