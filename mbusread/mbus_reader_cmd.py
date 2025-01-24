@@ -44,7 +44,12 @@ def main():
     mbus_config = MBusConfig.get(args.config)
     io_config = MBusIoConfig.load_from_yaml_file(args.io_config)
 
-    reader = MBusReader(mbus_config, io_config, i18n=i18n)
+    reader = MBusReader(
+        mbus_config=mbus_config,
+        io_config=io_config,
+        i18n=i18n,
+        debug=args.debug
+    )
     try:
         if args.message:
             reader.send_mbus_request(args.message)

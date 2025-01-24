@@ -14,17 +14,22 @@ from typing import Optional
 import serial
 
 from mbusread.i18n import I18n
-from mbusread.mbus_config import MBusConfig, Device
+from mbusread.mbus_config import MBusConfig, Device, MBusIoConfig
 
 
 class MBusReader:
     """Reader for Meter Bus data"""
 
-    def __init__(self, config: Optional[MBusConfig] = None, i18n: I18n = None):
+    def __init__(self,
+        config: Optional[MBusConfig] = None,
+        io_config:Optional[MBusIoConfig],
+        i18n: I18n = None,
+        debug:bool=False):
         """
         Initialize MBusReader with configuration
         """
         self.config = config or MBusConfig()
+        self.io_config = io_config or MBusIoConfig
         if i18n is None:
             i18n = I18n.default()
         self.i18n = i18n
@@ -46,14 +51,15 @@ class MBusReader:
 
     def _setup_serial(self) -> serial.Serial:
         """Initialize serial connection"""
-        return serial.Serial(
-            port=self.config.serial_device,
-            baudrate=self.config.baudrate,
+        ser=serial.Serial(
+            port=self.io_config.serial_device,
+            baudrate=self.io_config.initial_baudrate,
             bytesize=8,
             parity=serial.PARITY_NONE,
             stopbits=1,
-            timeout=self.config.timeout,
+            timeout=self.io_config.timeout,
         )
+        return ser
 
     def ser_write(self, msg: bytes, info: str) -> None:
         """
