@@ -107,4 +107,4 @@ def main():
     parser = MBusCommunicator.get_parser()
     args = parser.parse_args()
     communicator = MBusCommunicator(args)
-    communicator.work
+    communicator.work()
