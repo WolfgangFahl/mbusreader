@@ -1,0 +1,9 @@
+# Default MQTT configuration for mbusreader
+# https://github.com/WolfgangFahl/mbusreader
+#
+broker: localhost
+port: 1883
+# the username and password obviously needs to be changed
+username: scott
+password: tiger
+topic: mbus/data

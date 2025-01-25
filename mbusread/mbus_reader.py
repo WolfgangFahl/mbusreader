@@ -7,7 +7,7 @@ based on https://github.com/ganehag/pyMeterBus/discussions/40
 """
 
 import binascii
-import logging
+from mbusread.logger import Logger
 import time
 from typing import Optional
 
@@ -32,25 +32,12 @@ class MBusReader:
         """
         self.debug = debug
         self.device = device
+        self.logger=Logger.setup_logger(debug=debug)
         self.io_config = io_config or MBusIoConfig
         if i18n is None:
             i18n = I18n.default()
         self.i18n = i18n
-        self.logger = self._setup_logger()
         self.ser = self._setup_serial()
-
-    def _setup_logger(self) -> logging.Logger:
-        """Configure logging"""
-        logger = logging.getLogger("MBusReader")
-        if self.debug:
-            logger.setLevel(logging.DEBUG)
-        handler = logging.StreamHandler()
-        formatter = logging.Formatter(
-            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-        )
-        handler.setFormatter(formatter)
-        logger.addHandler(handler)
-        return logger
 
     def _setup_serial(self) -> serial.Serial:
         """Initialize serial connection"""
@@ -69,9 +56,9 @@ class MBusReader:
             # Truncate to first echo_display_len bytes for readability
             sent_hex = msg[:echo_display_len].hex()
             echo_hex = echo[:echo_display_len].hex()
-            warn_msg=f"""Echo mismatch!  Sent {len(msg)} Repl {len(echo)}\n
-Sent={sent_hex} \n
-Repl={echo_hex}\n"""
+            warn_msg=f"""Echo mismatch!  Sent {len(msg)} Repl {len(echo)}
+Sent={sent_hex}
+Repl={echo_hex}"""
             self.logger.warning(warn_msg)
         else:
             self.logger.debug(f"Echo matched: {len(echo)} bytes")
@@ -92,10 +79,10 @@ Repl={echo_hex}\n"""
         self.logger.info(self.i18n.get(info))
         self.ser.write(msg)
         self.ser.flush()
-
-        # Check and validate echo
-        echo = self.ser.read(len(msg))
-        self.show_echo(msg, echo, echo_display_len)
+        if self.device.has_echo:
+            # Check and validate echo
+            echo = self.ser.read(len(msg))
+            self.show_echo(msg, echo, echo_display_len)
 
     def wake_up(self, device: Device) -> None:
         """Perform the wakeup sequence based on device configuration"""

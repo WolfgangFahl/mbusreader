@@ -51,6 +51,7 @@ class Link:
 # from ngwidgets.yamlable import lod_storable
 from mbusread.yamlable import lod_storable
 
+
 @lod_storable
 class MBusIoConfig:
     """Configuration data class for M-Bus reader"""
@@ -106,6 +107,7 @@ class Device:
     title: str = ""
     url: str = ""
     doc_url: str = ""
+    has_echo: bool=False
     wakeup_pattern: str = "55"
     wakeup_times: int = 528  # Number of pattern repetitions
     wakeup_delay: float = 0.35  # secs
