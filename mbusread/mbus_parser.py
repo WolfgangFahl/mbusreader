@@ -8,11 +8,14 @@ https://github.com/ganehag/pyMeterBus/discussions/40
 import json
 import re
 import traceback
+from typing import Optional
 
 import meterbus
 from meterbus.telegram_short import TelegramShort
-from typing import Optional
+
 from mbusread.logger import Logger
+
+
 class MBusParser:
     """
     parse MBus data
@@ -20,7 +23,7 @@ class MBusParser:
 
     def __init__(self, debug: bool = False):
         self.debug = debug
-        self.logger=Logger.setup_logger(debug=debug)
+        self.logger = Logger.setup_logger(debug=debug)
 
     def fromhex(self, x, base=16):
         """Convert hex string to integer"""
@@ -72,8 +75,8 @@ class MBusParser:
 
     def extract_frame(self, data: bytes) -> Optional[bytes]:
         """Extract valid M-Bus frame between start (0x68) and end (0x16) bytes"""
-        start_byte = b'\x68'
-        end_byte = b'\x16'
+        start_byte = b"\x68"
+        end_byte = b"\x16"
         result = None
         status = "❌"
 
@@ -82,12 +85,14 @@ class MBusParser:
                 start_idx = data.index(start_byte)
                 end_idx = data.find(end_byte, start_idx + 1)
                 if end_idx != -1:
-                    result = data[start_idx:end_idx + 1]
+                    result = data[start_idx : end_idx + 1]
                     status = "✅"
                 else:
                     status = "⚠️"
             except ValueError:
                 pass
 
-        self.logger.debug(f"Frame extraction {status}: {result.hex() if result else 'None'}")
+        self.logger.debug(
+            f"Frame extraction {status}: {result.hex() if result else 'None'}"
+        )
         return result

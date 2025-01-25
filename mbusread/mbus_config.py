@@ -9,7 +9,8 @@ from dataclasses import field
 from typing import Dict
 from urllib.parse import quote
 
-#from ngwidgets.widgets import Link
+
+# from ngwidgets.widgets import Link
 # to avoid dependency here is a redundant copy
 class Link:
     """
@@ -47,6 +48,8 @@ class Link:
         style = f" style='{style}'"
         link = f"<a href='{url}'{title}{target}{style}>{text}</a>"
         return link
+
+
 # avoid dependency
 # from ngwidgets.yamlable import lod_storable
 from mbusread.yamlable import lod_storable
@@ -107,7 +110,7 @@ class Device:
     title: str = ""
     url: str = ""
     doc_url: str = ""
-    has_echo: bool=False
+    has_echo: bool = False
     wakeup_pattern: str = "55"
     wakeup_times: int = 528  # Number of pattern repetitions
     wakeup_delay: float = 0.35  # secs

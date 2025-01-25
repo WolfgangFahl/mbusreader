@@ -7,13 +7,13 @@ based on https://github.com/ganehag/pyMeterBus/discussions/40
 """
 
 import binascii
-from mbusread.logger import Logger
 import time
 from typing import Optional
 
 import serial
 
 from mbusread.i18n import I18n
+from mbusread.logger import Logger
 from mbusread.mbus_config import Device, MBusConfig, MBusIoConfig
 
 
@@ -32,7 +32,7 @@ class MBusReader:
         """
         self.debug = debug
         self.device = device
-        self.logger=Logger.setup_logger(debug=debug)
+        self.logger = Logger.setup_logger(debug=debug)
         self.io_config = io_config or MBusIoConfig
         if i18n is None:
             i18n = I18n.default()
@@ -51,20 +51,19 @@ class MBusReader:
         )
         return ser
 
-    def show_echo(self,msg:str,echo:str,echo_display_len:int=32):
+    def show_echo(self, msg: str, echo: str, echo_display_len: int = 32):
         if echo != msg:
             # Truncate to first echo_display_len bytes for readability
             sent_hex = msg[:echo_display_len].hex()
             echo_hex = echo[:echo_display_len].hex()
-            warn_msg=f"""Echo mismatch!  Sent {len(msg)} Repl {len(echo)}
+            warn_msg = f"""Echo mismatch!  Sent {len(msg)} Repl {len(echo)}
 Sent={sent_hex}
 Repl={echo_hex}"""
             self.logger.warning(warn_msg)
         else:
             self.logger.debug(f"Echo matched: {len(echo)} bytes")
 
-
-    def ser_write(self, msg: bytes, info: str,echo_display_len:int=16) -> None:
+    def ser_write(self, msg: bytes, info: str, echo_display_len: int = 16) -> None:
         """
         Writes a message to the serial port and validates the echo.
 

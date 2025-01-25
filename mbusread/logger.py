@@ -3,10 +3,13 @@ Created on 2025-01-25
 
 @author: wf
 """
+
 import logging
+
+
 class Logger:
     @staticmethod
-    def setup_logger(debug:bool=False) -> logging.Logger:
+    def setup_logger(debug: bool = False) -> logging.Logger:
         """Configure logging"""
         logger = logging.getLogger("MBusReader")
         if debug:

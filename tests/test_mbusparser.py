@@ -95,17 +95,17 @@ class TestMBusParser(Basetest):
         self.assertEqual(result.hex(), hex_data)
 
         # Test no start byte
-        result = mbus_parser.extract_frame(b'\x00\x01\x02')
+        result = mbus_parser.extract_frame(b"\x00\x01\x02")
         self.assertIsNone(result)
 
         # Test no end byte
-        result = mbus_parser.extract_frame(b'\x68\x01\x02')
+        result = mbus_parser.extract_frame(b"\x68\x01\x02")
         self.assertIsNone(result)
 
         # Test empty data
-        result = mbus_parser.extract_frame(b'')
+        result = mbus_parser.extract_frame(b"")
         self.assertIsNone(result)
-        
+
     def test_create_mbus_examples(self):
         """
         Create MBus examples structure with manufacturers and their devices/messages
