@@ -9,6 +9,10 @@ from dataclasses import field
 from typing import Dict
 from urllib.parse import quote
 
+# avoid dependency
+# from ngwidgets.yamlable import lod_storable
+from mbusread.yamlable import lod_storable
+
 
 # from ngwidgets.widgets import Link
 # to avoid dependency here is a redundant copy
@@ -48,11 +52,6 @@ class Link:
         style = f" style='{style}'"
         link = f"<a href='{url}'{title}{target}{style}>{text}</a>"
         return link
-
-
-# avoid dependency
-# from ngwidgets.yamlable import lod_storable
-from mbusread.yamlable import lod_storable
 
 
 @lod_storable

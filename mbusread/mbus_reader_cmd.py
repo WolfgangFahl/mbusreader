@@ -13,7 +13,9 @@ from mbusread.mbus_reader import MBusReader
 
 
 class MBusCommunicator:
-    """ """
+    """
+    communicate with an M-Bus device
+    """
 
     def __init__(self, args: argparse.Namespace):
         self.logger = Logger.setup_logger(args.debug)
