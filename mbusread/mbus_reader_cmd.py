@@ -3,7 +3,7 @@
 # Date: 2025-01-22
 
 import argparse
-
+import json
 from mbusread.i18n import I18n
 from mbusread.logger import Logger
 from mbusread.mbus_config import MBusConfig, MBusIoConfig
@@ -99,9 +99,18 @@ class MBusCommunicator:
                 self.logger.warning("No valid frame found in data")
                 return None
 
-            if frame and self.args.mqtt:
+            error_msg, mbus_frame = self.parser.parse_mbus_frame(frame)
+            if error_msg:
+                self.logger.error(f"Frame parsing error: {error_msg}")
+                return None
+
+            json_str = self.parser.get_frame_json(mbus_frame)
+            record = json.loads(json_str)
+            self.logger.info(record)
+
+            if self.args.mqtt and self.mqtt_config:
                 mqtt_handler = MBusMqtt(self.mqtt_config)
-                mqtt_handler.publish(frame)
+                mqtt_handler.publish(record)
         finally:
             self.reader.close()
 

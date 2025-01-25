@@ -7,11 +7,11 @@ based on https://github.com/ganehag/pyMeterBus/discussions/40
 
 import logging
 import time
-
+import json
 import paho.mqtt.client as mqtt
 
 from mbusread.mbus_config import MqttConfig
-
+from typing import Dict
 
 class MBusMqtt:
     """MQTT handler for M-Bus data"""
@@ -26,7 +26,7 @@ class MBusMqtt:
         mqtt
         return mqtt
 
-    def publish(self, data):
+    def publish(self, record:Dict):
         """Publish M-Bus data via MQTT"""
         client = mqtt.Client()
         if self.config.username:
@@ -35,7 +35,7 @@ class MBusMqtt:
         try:
             client.connect(self.config.broker, self.config.port, 60)
             client.loop_start()
-            json_str = json.dumps(data, indent=2)
+            json_str = json.dumps(record, indent=2)
             client.publish(self.config.topic, json_str)
             time.sleep(1)
             client.loop_stop()
