@@ -99,7 +99,7 @@ class MBusCommunicator:
                 self.logger.warning("No valid frame found in data")
                 return None
 
-            error_msg, mbus_frame = self.parser.parse_mbus_frame(frame)
+            error_msg, mbus_frame = self.parser.parse_mbus_frame(frame.hex())
             if error_msg:
                 self.logger.error(f"Frame parsing error: {error_msg}")
                 return None
