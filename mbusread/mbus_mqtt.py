@@ -40,13 +40,14 @@ class MBusMqtt:
             self.logger.info("Successfully disconnected")
 
     def transform_json(self, record: Dict):
-        """Transform record data before publishing"""
-        # Ensure we work with a copy to avoid modifying original
-        data = record.copy()
-        for item in data.get("body", {}).get("records", []):
-            if isinstance(item.get("value"), float):
-                item["value"] = round(item["value"], 2)
-        return json.dumps(data)
+        """Transform record data for Home Assistant"""
+        values = {}
+        for r in record["body"]["records"]:
+            if r.get("function") == "FunctionType.INSTANTANEOUS_VALUE":
+                if isinstance(r["value"], float):
+                    r["value"] = round(r["value"], 2)
+                values[r["type"]] = r["value"]
+        return json.dumps(values)
 
     def publish(self, record: Dict):
         try:
