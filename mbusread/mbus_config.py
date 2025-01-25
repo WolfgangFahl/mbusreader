@@ -7,10 +7,49 @@ M-Bus configuration Classes to be read from configuration files e.g. YAML encode
 import os
 from dataclasses import field
 from typing import Dict
+from urllib.parse import quote
 
-from ngwidgets.widgets import Link
-from ngwidgets.yamlable import lod_storable
+#from ngwidgets.widgets import Link
+# to avoid dependency here is a redundant copy
+class Link:
+    """
+    a link
+    """
 
+    red = "color: red;text-decoration: underline;"
+    blue = "color: blue;text-decoration: underline;"
+
+    @staticmethod
+    def create(
+        url, text, tooltip=None, target=None, style: str = None, url_encode=False
+    ):
+        """
+        Create a link for the given URL and text, with optional URL encoding.
+
+        Args:
+            url (str): The URL.
+            text (str): The link text.
+            tooltip (str): An optional tooltip.
+            target (str): Target attribute, e.g., _blank for opening the link in a new tab.
+            style (str): CSS style to be applied.
+            url_encode (bool): Flag to indicate if the URL needs encoding. default: False
+
+        Returns:
+            str: HTML anchor tag as a string.
+        """
+        if url_encode:
+            url = quote(url)
+
+        title = "" if tooltip is None else f" title='{tooltip}'"
+        target = "" if target is None else f" target='{target}'"
+        if style is None:
+            style = Link.blue
+        style = f" style='{style}'"
+        link = f"<a href='{url}'{title}{target}{style}>{text}</a>"
+        return link
+# avoid dependency
+# from ngwidgets.yamlable import lod_storable
+from mbusread.yamlable import lod_storable
 
 @lod_storable
 class MBusIoConfig:
