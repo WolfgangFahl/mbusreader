@@ -5,7 +5,6 @@ Created on 2025-01-17
 """
 
 import json
-import os
 
 from ngwidgets.basetest import Basetest
 

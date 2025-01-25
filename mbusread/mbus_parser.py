@@ -1,6 +1,8 @@
 """
 Created on 2025-01-22
-@author: wf
+see also
+https://github.com/ganehag/pyMeterBus/discussions/40
+@author: Thorsten1982, wf
 """
 
 import json
@@ -9,7 +11,7 @@ import traceback
 
 import meterbus
 from meterbus.telegram_short import TelegramShort
-
+from typing import Optional
 
 class MBusParser:
     """
@@ -66,3 +68,20 @@ class MBusParser:
             if self.debug:
                 traceback.format_exception(ex)
         return error_msg, frame
+
+    def filter_raw_data(self, data: bytes) -> Optional[bytes]:
+        """Extract valid M-Bus frame between start (0x68) and end (0x16) bytes"""
+        if not data:
+            return None
+
+        start_byte = b'\x68'
+        end_byte = b'\x16'
+
+        try:
+            start_idx = data.index(start_byte)
+            end_idx = data.find(end_byte, start_idx + 1)
+            if end_idx != -1:
+                return data[start_idx:end_idx + 1]
+        except ValueError:
+            pass
+        return None

@@ -95,5 +95,7 @@ class TestMBusReader(Basetest):
         self.mock_ser.read.return_value = wrong_response
         with self.assertLogs(level="WARNING") as cm:
             reader.ser_write(test_msg, "wake_up_started")
-            expected_msg = "Echo mismatch! First 16 bytes: Sent=0x55555555555555555555555555555555..., Received=0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa..."
-            self.assertIn(expected_msg, cm.output[0])
+            expected_msgs = ["Echo mismatch!","Sent 528 Repl 528", "Sent=555555",
+                             "Repl=aaaaaaaa"]
+            for msg in expected_msgs:
+                self.assertIn(msg, cm.output[0])

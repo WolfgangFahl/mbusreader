@@ -64,7 +64,20 @@ class MBusReader:
         )
         return ser
 
-    def ser_write(self, msg: bytes, info: str) -> None:
+    def show_echo(self,msg:str,echo:str,echo_display_len:int=32):
+        if echo != msg:
+            # Truncate to first echo_display_len bytes for readability
+            sent_hex = msg[:echo_display_len].hex()
+            echo_hex = echo[:echo_display_len].hex()
+            warn_msg=f"""Echo mismatch!  Sent {len(msg)} Repl {len(echo)}\n
+Sent={sent_hex} \n
+Repl={echo_hex}\n"""
+            self.logger.warning(warn_msg)
+        else:
+            self.logger.debug(f"Echo matched: {len(echo)} bytes")
+
+
+    def ser_write(self, msg: bytes, info: str,echo_display_len:int=16) -> None:
         """
         Writes a message to the serial port and validates the echo.
 
@@ -82,16 +95,7 @@ class MBusReader:
 
         # Check and validate echo
         echo = self.ser.read(len(msg))
-        if echo != msg:
-            if echo != msg:
-                # Truncate to first 16 bytes for readability
-                sent_hex = msg[:16].hex()
-                echo_hex = echo[:16].hex()
-                self.logger.warning(
-                    f"Echo mismatch! First 16 bytes: Sent=0x{sent_hex}..., Received=0x{echo_hex}..."
-                )
-        else:
-            self.logger.debug(f"Echo matched: {len(echo)} bytes")
+        self.show_echo(msg, echo, echo_display_len)
 
     def wake_up(self, device: Device) -> None:
         """Perform the wakeup sequence based on device configuration"""
