@@ -106,7 +106,8 @@ class MBusCommunicator:
 
             json_str = self.parser.get_frame_json(mbus_frame)
             record = json.loads(json_str)
-            self.logger.info(record)
+            pretty_json=json.dumps(record, indent=2, default=str)
+            self.logger.info(pretty_json)
 
             if self.args.mqtt and self.mqtt_config:
                 mqtt_handler = MBusMqtt(self.mqtt_config)
