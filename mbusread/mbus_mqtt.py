@@ -41,10 +41,12 @@ class MBusMqtt:
 
     def transform_json(self, record: Dict):
         """Transform record data before publishing"""
-        for item in record.get("body", {}).get("records", []):
+        # Ensure we work with a copy to avoid modifying original
+        data = record.copy()
+        for item in data.get("body", {}).get("records", []):
             if isinstance(item.get("value"), float):
                 item["value"] = round(item["value"], 2)
-        return json.dumps(record)
+        return json.dumps(data)
 
     def publish(self, record: Dict):
         try:
