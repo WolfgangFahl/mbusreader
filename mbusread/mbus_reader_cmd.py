@@ -18,6 +18,7 @@ class MBusCommunicator:
     """
 
     def __init__(self, args: argparse.Namespace):
+        self.args=args
         self.logger = Logger.setup_logger(args.debug)
         i18n = I18n.default()
         i18n.language = args.lang
