@@ -4,7 +4,7 @@ based on https://github.com/ganehag/pyMeterBus/discussions/40
 
 @author: Thorsten1982,wf
 """
-    
+
 import logging
 import time
 import json
@@ -39,11 +39,18 @@ class MBusMqtt:
         else:
             self.logger.info("Successfully disconnected")
 
+    def transform_json(self, record: Dict):
+        """Transform record data before publishing"""
+        for item in record.get("body", {}).get("records", []):
+            if isinstance(item.get("value"), float):
+                item["value"] = round(item["value"], 2)
+        return json.dumps(record)
+
     def publish(self, record: Dict):
         try:
             self.client.connect(self.config.broker, self.config.port, 60)
             self.client.loop_start()
-            json_str = json.dumps(record, indent=2)
+            json_str = self.transform_json(record)
             self.client.publish(self.config.topic, json_str)
             time.sleep(1)
             self.client.loop_stop()
