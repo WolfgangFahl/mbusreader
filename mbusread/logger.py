@@ -9,6 +9,7 @@ import logging
 
 class Logger:
     """Logger singleton for M-Bus reader"""
+
     _logger = None
 
     @classmethod

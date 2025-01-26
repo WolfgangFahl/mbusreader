@@ -86,13 +86,19 @@ class TestMBusParser(Basetest):
     def test_extract_frame(self):
         """Test frame extraction from binary data"""
         mbus_parser = MBusParser(debug=self.debug)
-        hex_data = "684d4d680800722654832277040904360000000c78265483220406493500000c14490508000b2d0000000b3b0000000a5a18060a5e89020b61883200046d0d0c2c310227c80309fd0e2209fd0f470f00008d16"
-        test_data = bytes.fromhex(hex_data)
+        hex_datas = [
+            "684d4d680800722654832277040904360000000c78265483220406493500000c14490508000b2d0000000b3b0000000a5a18060a5e89020b61883200046d0d0c2c310227c80309fd0e2209fd0f470f00008d16",
+            "684d4d680800728194362092261704fb0000000c788194362004060ea100000c14827636000b2d1400000b3b6400000a5a70050a5e72030b61811900046d20163a3102270b0709fd0e0709fd0f110f0000f816"
+        ]
+        for hex_data in hex_datas:
+            test_data = bytes.fromhex(hex_data)
 
-        # Test valid frame
-        result = mbus_parser.extract_frame(test_data)
-        self.assertIsNotNone(result)
-        self.assertEqual(result.hex(), hex_data)
+            # Test valid frame
+            result = mbus_parser.extract_frame(test_data)
+            self.assertIsNotNone(result)
+            self.assertEqual(result.hex(), hex_data)
+
+
 
         # Test no start byte
         result = mbus_parser.extract_frame(b"\x00\x01\x02")
@@ -105,6 +111,7 @@ class TestMBusParser(Basetest):
         # Test empty data
         result = mbus_parser.extract_frame(b"")
         self.assertIsNone(result)
+
 
     def test_create_mbus_examples(self):
         """

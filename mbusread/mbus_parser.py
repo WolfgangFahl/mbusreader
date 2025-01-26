@@ -83,12 +83,18 @@ class MBusParser:
         if data:
             try:
                 start_idx = data.index(start_byte)
-                end_idx = data.find(end_byte, start_idx + 1)
-                if end_idx != -1:
-                    result = data[start_idx : end_idx + 1]
-                    status = "✅"
-                else:
+                next_end = start_idx + 1
+                while (end_idx := data.find(end_byte, next_end)) != -1:
                     status = "⚠️"
+                    frame_len = end_idx - start_idx - 5
+                    if frame_len >= 3:  # minimum length for 68 L L
+                        l1 = data[start_idx + 1]
+                        l2 = data[start_idx + 2]
+                        if l1 == l2 and l1 == frame_len:  # length field matches data length
+                            result = data[start_idx : end_idx + 1]
+                            status = "✅"
+                            break
+                    next_end = end_idx + 1
             except ValueError:
                 pass
 

@@ -5,12 +5,15 @@ based on https://github.com/ganehag/pyMeterBus/discussions/40
 @author: Thorsten1982,wf
 """
 
+import json
 import logging
 import time
-import json
-import paho.mqtt.client as mqtt
-from mbusread.mbus_config import MqttConfig
 from typing import Dict
+
+import paho.mqtt.client as mqtt
+
+from mbusread.mbus_config import MqttConfig
+
 
 class MBusMqtt:
     def __init__(self, config: MqttConfig):
@@ -39,7 +42,7 @@ class MBusMqtt:
         else:
             self.logger.info("Successfully disconnected")
 
-    def transform_json(self, record: Dict)->Dict:
+    def transform_json(self, record: Dict) -> Dict:
         """Transform record data for Home Assistant"""
         values = {}
         for r in record["body"]["records"]:
@@ -49,7 +52,7 @@ class MBusMqtt:
                 values[r["type"]] = r["value"]
         return values
 
-    def publish(self, msg:str):
+    def publish(self, msg: str):
         try:
             self.client.connect(self.config.broker, self.config.port, 60)
             self.client.loop_start()

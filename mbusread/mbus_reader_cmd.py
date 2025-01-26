@@ -4,6 +4,7 @@
 
 import argparse
 import json
+
 from mbusread.i18n import I18n
 from mbusread.logger import Logger
 from mbusread.mbus_config import MBusConfig, MBusIoConfig
@@ -18,7 +19,7 @@ class MBusCommunicator:
     """
 
     def __init__(self, args: argparse.Namespace):
-        self.args=args
+        self.args = args
         self.logger = Logger.setup_logger(args.debug)
         i18n = I18n.default()
         i18n.language = args.lang
@@ -53,9 +54,7 @@ class MBusCommunicator:
             default="cf_echo_ii",
             help="Device type [default: %(default)s]",
         )
-        parser.add_argument(
-            "--debug", action="store_true", help="Enable debug logging"
-        )
+        parser.add_argument("--debug", action="store_true", help="Enable debug logging")
         parser.add_argument(
             "-i",
             "--io_config",
@@ -115,7 +114,7 @@ class MBusCommunicator:
 
             json_str = self.parser.get_frame_json(mbus_frame)
             record = json.loads(json_str)
-            pretty_json=json.dumps(record, indent=2, default=str)
+            pretty_json = json.dumps(record, indent=2, default=str)
             if self.args.debug:
                 print("pyMeterBus JSON:")
                 print(pretty_json)
@@ -124,7 +123,7 @@ class MBusCommunicator:
             # will not be sent - we want it for debug and output!
             mqtt_handler = MBusMqtt(self.mqtt_config or MqttConfig())
             mqtt_dict = mqtt_handler.transform_json(record)
-            mqtt_msg=json.dumps(mqtt_dict,indent=2,default=str)
+            mqtt_msg = json.dumps(mqtt_dict, indent=2, default=str)
             if self.args.debug:
                 print("MQTT-message:")
                 print(mqtt_msg)
