@@ -109,7 +109,7 @@ class MBusCommunicator:
             if error_msg:
                 self.logger.error(f"Frame parsing error: {error_msg}")
                 return None
-            if self.debug:
+            if self.args.debug:
                 print("M-Bus frame:")
                 print(mbus_frame)
 
