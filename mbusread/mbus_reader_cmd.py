@@ -140,7 +140,7 @@ class MBusCommunicator:
 
 
 def main():
-    parser = MBusCommunicator.get_parser()
+    parser = MBusCommunicator.get_argparser()
     args = parser.parse_args()
     communicator = MBusCommunicator(args)
     communicator.work()
