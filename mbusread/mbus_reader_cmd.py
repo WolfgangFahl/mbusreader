@@ -39,7 +39,7 @@ class MBusCommunicator:
         pass
 
     @classmethod
-    def get_parser(cls) -> argparse.ArgumentParser:
+    def get_argparser(cls) -> argparse.ArgumentParser:
         parser = argparse.ArgumentParser(description="M-Bus Reader")
         parser.add_argument(
             "-c",
@@ -48,26 +48,25 @@ class MBusCommunicator:
             help="Config file path [default: %(default)s]",
         )
         parser.add_argument(
-            "-i",
-            "--io_config",
-            default=MBusConfig.examples_path() + "/mbus_io_config.yaml",
-            help="IO config file path [default: %(default)s]",
-        )
-        parser.add_argument(
-            "-q",
-            "--mqtt_config",
-            default=MBusConfig.examples_path() + "/mqtt_config.yaml",
-            help="MQTT config file path [default: %(default)s]",
-        )
-
-        parser.add_argument(
             "-D",
             "--device",
             default="cf_echo_ii",
             help="Device type [default: %(default)s]",
         )
         parser.add_argument(
-            "-m", "--message", help="Message ID to send [default: %(default)s]"
+            "--debug", action="store_true", help="Enable debug logging"
+        )
+        parser.add_argument(
+            "-i",
+            "--io_config",
+            default=MBusConfig.examples_path() + "/mbus_io_config.yaml",
+            help="IO config file path [default: %(default)s]",
+        )
+        parser.add_argument(
+            "--lang",
+            choices=["en", "de"],
+            default="en",
+            help="Language for messages (default: en)",
         )
         parser.add_argument(
             "-M",
@@ -76,15 +75,22 @@ class MBusCommunicator:
             help="Manufacturer ID [default: %(default)s]",
         )
         parser.add_argument(
+            "-m", "--message", help="Message ID to send [default: %(default)s]"
+        )
+        parser.add_argument(
             "--mqtt", action="store_true", help="Enable MQTT publishing"
         )
         parser.add_argument(
-            "--lang",
-            choices=["en", "de"],
-            default="en",
-            help="Language for messages (default: en)",
+            "-o",
+            "--output",
+            help="File path to save MQTT message to (even if MQTT is not configured)",
         )
-        parser.add_argument("--debug", action="store_true", help="Enable debug logging")
+        parser.add_argument(
+            "-q",
+            "--mqtt_config",
+            default=MBusConfig.examples_path() + "/mqtt_config.yaml",
+            help="MQTT config file path [default: %(default)s]",
+        )
         return parser
 
     def work(self):
@@ -103,16 +109,32 @@ class MBusCommunicator:
             if error_msg:
                 self.logger.error(f"Frame parsing error: {error_msg}")
                 return None
+            if self.debug:
+                print("M-Bus frame:")
+                print(mbus_frame)
 
             json_str = self.parser.get_frame_json(mbus_frame)
             record = json.loads(json_str)
             pretty_json=json.dumps(record, indent=2, default=str)
             if self.args.debug:
+                print("pyMeterBus JSON:")
                 print(pretty_json)
+
+            # always use the transform_json of the MBusMqtt even if the message
+            # will not be sent - we want it for debug and output!
+            mqtt_handler = MBusMqtt(self.mqtt_config or MqttConfig())
+            mqtt_dict = mqtt_handler.transform_json(record)
+            mqtt_msg=json.dumps(mqtt_dict,indent=2,default=str)
+            if self.args.debug:
+                print("MQTT-message:")
+                print(mqtt_msg)
+            if self.args.output:
+                with open(self.args.output, "w") as f:
+                    f.write(mqtt_msg)
 
             if self.args.mqtt and self.mqtt_config:
                 mqtt_handler = MBusMqtt(self.mqtt_config)
-                mqtt_handler.publish(record)
+                mqtt_handler.publish(mqtt_msg)
         finally:
             self.reader.close()
 

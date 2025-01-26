@@ -39,7 +39,7 @@ class MBusMqtt:
         else:
             self.logger.info("Successfully disconnected")
 
-    def transform_json(self, record: Dict):
+    def transform_json(self, record: Dict)->Dict:
         """Transform record data for Home Assistant"""
         values = {}
         for r in record["body"]["records"]:
@@ -47,14 +47,13 @@ class MBusMqtt:
                 if isinstance(r["value"], float):
                     r["value"] = round(r["value"], 2)
                 values[r["type"]] = r["value"]
-        return json.dumps(values)
+        return values
 
-    def publish(self, record: Dict):
+    def publish(self, msg:str):
         try:
             self.client.connect(self.config.broker, self.config.port, 60)
             self.client.loop_start()
-            json_str = self.transform_json(record)
-            self.client.publish(self.config.topic, json_str)
+            self.client.publish(self.config.topic, msg)
             time.sleep(1)
             self.client.loop_stop()
             self.client.disconnect()

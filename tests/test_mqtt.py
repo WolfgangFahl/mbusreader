@@ -33,8 +33,9 @@ class TestMqtt(Basetest):
     def test_mqtt_publish(self):
         """Test MQTT publishing"""
         mqtt_handler = MBusMqtt(self.mqtt_config)
-        test_data = {"test": "data"}
-        mqtt_handler.publish(test_data)
+        test_record= {"test": "data"}
+        test_msg=json.dumps(test_record, indent=2)
+        mqtt_handler.publish(test_msg)
 
         self.mock_client.assert_called_once()
         mock_client_instance = self.mock_client.return_value
@@ -43,7 +44,7 @@ class TestMqtt(Basetest):
         )
         mock_client_instance.publish.assert_called_with(
             "test/topic",
-            json.dumps(test_data, indent=2)
+            test_msg
         )
 
     def test_mqtt_auth(self):
