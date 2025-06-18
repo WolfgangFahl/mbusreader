@@ -7,7 +7,7 @@ Created on 2025-01-22
 from dataclasses import field
 from typing import Dict
 
-from ngwidgets.yamlable import lod_storable
+from basemkit.yamlable import lod_storable
 
 from mbusread.mbus_config import MBusConfig
 

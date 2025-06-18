@@ -11,7 +11,7 @@ from urllib.parse import quote
 
 # avoid dependency
 # from ngwidgets.yamlable import lod_storable
-from mbusread.yamlable import lod_storable
+from basemkit.yamlable import lod_storable
 
 
 # from ngwidgets.widgets import Link
