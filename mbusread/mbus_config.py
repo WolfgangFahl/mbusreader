@@ -9,8 +9,6 @@ from dataclasses import field
 from typing import Dict
 from urllib.parse import quote
 
-# avoid dependency
-# from ngwidgets.yamlable import lod_storable
 from basemkit.yamlable import lod_storable
 
 
